@@ -31,6 +31,7 @@
  */
 import java.io.*;
 import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class QuoteServerThread extends Thread {
@@ -45,13 +46,8 @@ public class QuoteServerThread extends Thread {
 
     public QuoteServerThread(String name) throws IOException {
         super(name);
-        socket = new DatagramSocket(4445);
+        socket = new DatagramSocket(25000);
 
-        try {
-            in = new BufferedReader(new FileReader("one-liners.txt"));
-        } catch (FileNotFoundException e) {
-            System.err.println("Could not open quote file. Serving time instead.");
-        }
     }
 
     public void run() {
@@ -63,15 +59,14 @@ public class QuoteServerThread extends Thread {
                 // receive request
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
+                String str = new String(buf, 0, packet.getLength(), StandardCharsets.UTF_8);
 
-                // figure out response
-                String dString = null;
-                if (in == null)
-                    dString = new Date().toString();
-                else
-                    dString = getNextQuote();
+                try (FileOutputStream fileOutputStream = new FileOutputStream("output.txt", true)) {
+                    fileOutputStream.write(str.getBytes(StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
-                buf = dString.getBytes();
 
                 // send the response to the client at "address" and "port"
                 InetAddress address = packet.getAddress();
