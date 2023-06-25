@@ -29,10 +29,13 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+import org.json.JSONObject;
+
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.zip.CRC32;
 
 public class QuoteServerThread extends Thread {
 
@@ -52,48 +55,53 @@ public class QuoteServerThread extends Thread {
 
     public void run() {
 
-        while (moreQuotes) {
+        while (true) {
             try {
-                byte[] buf = new byte[256];
 
-                // receive request
-                DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                socket.receive(packet);
-                String str = new String(buf, 0, packet.getLength(), StandardCharsets.UTF_8);
 
-                try (FileOutputStream fileOutputStream = new FileOutputStream("output.txt", true)) {
-                    fileOutputStream.write(str.getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                    byte[] buf = new byte[512];
+                    DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
+                    socket.receive(dataPacket);
+                    String packetString = new String(dataPacket.getData(), 0, dataPacket.getLength(), StandardCharsets.UTF_8);
+
+                    // Parse the packet JSON
+                    JSONObject packetJson = new JSONObject(packetString);
+                    String fileName = packetJson.getString("fileName");
+                    byte[] fileData = Base64.getDecoder().decode(packetJson.getString("fileData"));
+                    long crcExpected= packetJson.getLong("CRC");
+                    CRC32 crc32 = new CRC32();
+                    crc32.update(fileData);
+                    long crcCalculated = crc32.getValue();
+                    if(crcCalculated!= crcExpected) {
+                        //handle logic
+                    }
+
+
+                    //Write the file data
+                    try (FileOutputStream fileOutputStream = new FileOutputStream(fileName, true)) {
+                        fileOutputStream.write(fileData);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
 
 
                 // send the response to the client at "address" and "port"
-                InetAddress address = packet.getAddress();
-                int port = packet.getPort();
-                packet = new DatagramPacket(buf, buf.length, address, port);
-                socket.send(packet);
+                InetAddress address = dataPacket.getAddress();
+                int port = dataPacket.getPort();
+                dataPacket = new DatagramPacket(buf, buf.length, address, port);
+                socket.send(dataPacket);
             } catch (IOException e) {
                 e.printStackTrace();
-                moreQuotes = false;
+
             }
+            if (!moreQuotes)
+                break;
         }
         socket.close();
     }
-
-    protected String getNextQuote() {
-        String returnValue = null;
-        try {
-            if ((returnValue = in.readLine()) == null) {
-                in.close();
-                moreQuotes = false;
-                returnValue = "No more quotes. Goodbye.";
-            }
-        } catch (IOException e) {
-            returnValue = "IOException occurred in server.";
-        }
-        return returnValue;
-    }
 }
+
+
 
 
