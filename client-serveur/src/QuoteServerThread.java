@@ -72,11 +72,12 @@ public class QuoteServerThread extends Thread {
                     CRC32 crc32 = new CRC32();
                     crc32.update(fileData);
                     long crcCalculated = crc32.getValue();
-                    if(crcCalculated!= crcExpected)
+                    if(crcCalculated!= crcExpected) {
                         //handle logic
+                    }
 
 
-                    // Write the file data
+                    //Write the file data
                     try (FileOutputStream fileOutputStream = new FileOutputStream(fileName, true)) {
                         fileOutputStream.write(fileData);
                     } catch (IOException e) {
