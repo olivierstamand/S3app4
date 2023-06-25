@@ -5,6 +5,7 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Scanner;
+import java.util.zip.CRC32;
 
 import org.json.JSONObject;
 
@@ -42,13 +43,17 @@ public class FileTransferClient {
         // Send data packets
         // Send data packets
         for (int packetNumber = 0; packetNumber < totalPackets; packetNumber++) {
+
             int offset = packetNumber * MAX_PACKET_SIZE;
             int length = Math.min(MAX_PACKET_SIZE, fileContent.length - offset);
             byte[] packetData = new byte[length];
             System.arraycopy(fileContent, offset, packetData, 0, length);
+            CRC32 crc32 = new CRC32();
+            crc32.update(packetData);
+            long crcValue = crc32.getValue();
 
             // Create the packet with sequence number and data
-            byte[] fullPacket = createPacketHeader(packetNumber, totalPackets, file.getName(), packetData);
+            byte[] fullPacket = createPacketHeader(crcValue,file.getName(), packetData);
 
 
 
@@ -68,11 +73,10 @@ public class FileTransferClient {
 
 
 
-    private static byte[] createPacketHeader(int packetNumber, int totalPackets, String fileName,byte [] data) {
+    private static byte[] createPacketHeader(long CRC,  String fileName,byte [] data) {
         // Create a JSON object for the header
         JSONObject headerJson = new JSONObject();
-        headerJson.put("packetNumber", packetNumber);
-        headerJson.put("totalPackets", totalPackets);
+        headerJson.put("CRC", CRC);
         headerJson.put("fileName", fileName);
         headerJson.put("fileData", Base64.getEncoder().encodeToString(data));
 

@@ -35,6 +35,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.zip.CRC32;
 
 public class QuoteServerThread extends Thread {
 
@@ -67,6 +68,13 @@ public class QuoteServerThread extends Thread {
                     JSONObject packetJson = new JSONObject(packetString);
                     String fileName = packetJson.getString("fileName");
                     byte[] fileData = Base64.getDecoder().decode(packetJson.getString("fileData"));
+                    long crcExpected= packetJson.getLong("CRC");
+                    CRC32 crc32 = new CRC32();
+                    crc32.update(fileData);
+                    long crcCalculated = crc32.getValue();
+                    if(crcCalculated!= crcExpected)
+                        //handle logic
+
 
                     // Write the file data
                     try (FileOutputStream fileOutputStream = new FileOutputStream(fileName, true)) {
