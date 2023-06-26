@@ -21,12 +21,13 @@ public class ApplicationHandlerServer extends BaseHandler {
 
             filename= fileDataByte.toString();
         }
-
-        // Write the file data
-        try (FileOutputStream fileOutputStream = new FileOutputStream(filename, true)) {
-            fileOutputStream.write(fileDataByte);
-        } catch (IOException e) {
-            e.printStackTrace();
+        else {
+            // Write the file data
+            try (FileOutputStream fileOutputStream = new FileOutputStream(filename, true)) {
+                fileOutputStream.write(fileDataByte);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         // Pass the packet to the next handler in the chain

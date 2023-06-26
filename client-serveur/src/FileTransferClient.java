@@ -54,16 +54,15 @@ public class FileTransferClient {
 
         // Send data packets
         // Send data packets
-        for (int packetNumber = 1; packetNumber < totalPackets; packetNumber++) {
+        for (int packetNumber = 0; packetNumber < totalPackets; packetNumber++) {
 
             int offset = packetNumber * MAX_PACKET_SIZE_DATA;
             int length = Math.min(MAX_PACKET_SIZE_DATA, fileContent.length - offset);
             byte[] packetData = new byte[length];
             System.arraycopy(fileContent, offset, packetData, 0, length);
 
-
             // Create the packet with sequence number and data
-            byte[] fullPacket = createPacketHeader(packetNumber+1,getCRCValue(packetData), null, packetData);
+            byte[] fullPacket = createPacketHeader(packetNumber+2,getCRCValue(packetData), null, packetData);
 
             sendPacket(socket,fullPacket,serverAddress,SERVER_PORT);
 

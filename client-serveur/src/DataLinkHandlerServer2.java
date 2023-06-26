@@ -11,7 +11,7 @@ public class DataLinkHandlerServer2 extends BaseHandler{
         this.socket = socket;
     }
     public void handlePacket(DatagramPacket packet) throws IOException{
-        byte[] buf = new byte[512];
+        byte[] buf = new byte[200];
 
         InetAddress address = packet.getAddress();
         int port = packet.getPort();
