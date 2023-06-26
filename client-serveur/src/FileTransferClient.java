@@ -36,32 +36,32 @@ public class FileTransferClient {
         // Create a datagram socket
         DatagramSocket socket = new DatagramSocket();
 
+        byte [] packetFileName= createPacketHeader(1,getCRCValue(file.getName().getBytes()), file.getName(),null);
+        sendPacket(socket,packetFileName,serverAddress,SERVER_PORT);
+
+
+
 
         // Calculate the total number of packets needed for file transmission
         int totalPackets = (int) Math.ceil((double) fileContent.length / MAX_PACKET_SIZE);
 
         // Send data packets
         // Send data packets
-        for (int packetNumber = 0; packetNumber < totalPackets; packetNumber++) {
+        for (int packetNumber = 1; packetNumber < totalPackets; packetNumber++) {
 
             int offset = packetNumber * MAX_PACKET_SIZE;
             int length = Math.min(MAX_PACKET_SIZE, fileContent.length - offset);
             byte[] packetData = new byte[length];
             System.arraycopy(fileContent, offset, packetData, 0, length);
-            CRC32 crc32 = new CRC32();
-            crc32.update(packetData);
-            long crcValue = crc32.getValue();
+
 
             // Create the packet with sequence number and data
-            byte[] fullPacket = createPacketHeader(crcValue,file.getName(), packetData);
+            byte[] fullPacket = createPacketHeader(packetNumber+1,getCRCValue(packetData),file.getName(), packetData);
+
+            sendPacket(socket,fullPacket,serverAddress,SERVER_PORT);
 
 
 
-            // Create the datagram packet with the full packet data
-            DatagramPacket dataPacket = new DatagramPacket(fullPacket, fullPacket.length, serverAddress, SERVER_PORT);
-
-            // Send the data packet to the server
-            socket.send(dataPacket);
         }
         System.out.println("File sent successfully.");
 
@@ -73,17 +73,35 @@ public class FileTransferClient {
 
 
 
-    private static byte[] createPacketHeader(long CRC,  String fileName,byte [] data) {
+    private static byte[] createPacketHeader(int packet_number,long CRC,  String fileName,byte [] data) {
         // Create a JSON object for the header
         JSONObject headerJson = new JSONObject();
+        headerJson.put("packet_number",packet_number);
         headerJson.put("CRC", CRC);
         headerJson.put("fileName", fileName);
-        headerJson.put("fileData", Base64.getEncoder().encodeToString(data));
+        if(data!=null)
+            headerJson.put("fileData", Base64.getEncoder().encodeToString(data));
 
         // Convert the JSON object to a byte array
         String headerString = headerJson.toString();
         return headerString.getBytes(StandardCharsets.UTF_8);
     }
+    public static long getCRCValue(byte[] data )
+    {
+        CRC32 crc= new CRC32();
+        crc.update(data);
+        return crc.getValue();
+
+    }
+    public static void sendPacket(DatagramSocket socket, byte[] packet, InetAddress address ,int port) throws IOException {
+        DatagramPacket datagramPacket= new DatagramPacket(packet,packet.length,address,port);
+        socket.send(datagramPacket);
+
+    }
+
 
 
 }
+
+
+

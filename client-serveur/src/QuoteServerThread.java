@@ -43,6 +43,7 @@ public class QuoteServerThread extends Thread {
     protected BufferedReader in = null;
     protected boolean moreQuotes = true;
 
+    protected String filename=null;
     public QuoteServerThread() throws IOException {
         this("QuoteServerThread");
     }
@@ -60,37 +61,40 @@ public class QuoteServerThread extends Thread {
 
 
                     byte[] buf = new byte[512];
+
                     DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
                     socket.receive(dataPacket);
                     String packetString = new String(dataPacket.getData(), 0, dataPacket.getLength(), StandardCharsets.UTF_8);
 
                     // Parse the packet JSON
                     JSONObject packetJson = new JSONObject(packetString);
-                    String fileName = packetJson.getString("fileName");
-                    byte[] fileData = Base64.getDecoder().decode(packetJson.getString("fileData"));
-                    long crcExpected= packetJson.getLong("CRC");
-                    CRC32 crc32 = new CRC32();
-                    crc32.update(fileData);
-                    long crcCalculated = crc32.getValue();
-                    if(crcCalculated!= crcExpected) {
-                        //handle logic
+                    if(packetJson.getInt("packet_number")==1)
+                    {
+                        filename= packetJson.getString("fileName");
                     }
+                    else {
+                        byte[] fileData = Base64.getDecoder().decode(packetJson.getString("fileData"));
+                        long crcExpected = packetJson.getLong("CRC");
+                        long crcCalculated = FileTransferClient.getCRCValue(fileData);
+                        if (crcCalculated != crcExpected) {
+                            //handle logic
+                        }
 
 
-                    //Write the file data
-                    try (FileOutputStream fileOutputStream = new FileOutputStream(fileName, true)) {
-                        fileOutputStream.write(fileData);
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        //Write the file data
+                        try (FileOutputStream fileOutputStream = new FileOutputStream(filename, true)) {
+                            fileOutputStream.write(fileData);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+
+                        // send the response to the client at "address" and "port"
+                        InetAddress address = dataPacket.getAddress();
+                        int port = dataPacket.getPort();
+                        dataPacket = new DatagramPacket(buf, buf.length, address, port);
+                        socket.send(dataPacket);
                     }
-
-
-
-                // send the response to the client at "address" and "port"
-                InetAddress address = dataPacket.getAddress();
-                int port = dataPacket.getPort();
-                dataPacket = new DatagramPacket(buf, buf.length, address, port);
-                socket.send(dataPacket);
             } catch (IOException e) {
                 e.printStackTrace();
 
