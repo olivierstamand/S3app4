@@ -12,9 +12,9 @@ public class ApplicationHandlerServer extends BaseHandler {
     public void handlePacket(DatagramPacket packet) throws IOException {
         // Perform Application Layer processing here
         byte[] packetData = packet.getData();
-        int fileDataLength = packetData.length - (FileTransferClient.PACKET_NUMBER_SIZE + FileTransferClient.CRC_SIZE);
+        int fileDataLength = packetData.length - FileTransferClient.HEADER_SIZE;
         byte [] fileDataByte = new byte[fileDataLength];
-        System.arraycopy(packetData, FileTransferClient.PACKET_NUMBER_SIZE + FileTransferClient.CRC_SIZE, fileDataByte, 0, fileDataLength);
+        System.arraycopy(packetData, FileTransferClient.HEADER_SIZE, fileDataByte, 0, fileDataLength);
 
         if(ByteBuffer.wrap(packetData, 0, FileTransferClient.PACKET_NUMBER_SIZE).getInt()==1)
         {
@@ -23,7 +23,7 @@ public class ApplicationHandlerServer extends BaseHandler {
         }
         else {
             // Write the file data
-            try (FileOutputStream fileOutputStream = new FileOutputStream(filename, true)) {
+            try (FileOutputStream fileOutputStream = new FileOutputStream("bidon.txt", true)) {
                 fileOutputStream.write(fileDataByte);
             } catch (IOException e) {
                 e.printStackTrace();
