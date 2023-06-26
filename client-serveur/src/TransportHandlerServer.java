@@ -12,10 +12,11 @@ public class TransportHandlerServer extends BaseHandler {
     public void handlePacket(DatagramPacket packet) throws IOException{
 
         byte[] fileData = null;
-        if (packet.getLength() > FileTransferClient.PACKET_NUMBER_SIZE + FileTransferClient.CRC_SIZE+ FileTransferClient.MESSAGE_SIZE) {
-            int fileDataLength = packet.getLength() - (FileTransferClient.PACKET_NUMBER_SIZE + FileTransferClient.CRC_SIZE + FileTransferClient.MESSAGE_SIZE);
+        byte[] packetData = packet.getData();
+       if (packet.getLength() > FileTransferClient.PACKET_NUMBER_SIZE + FileTransferClient.CRC_SIZE+ FileTransferClient.MESSAGE_SIZE) {
+            int fileDataLength = packetData.length- (FileTransferClient.PACKET_NUMBER_SIZE + FileTransferClient.CRC_SIZE + FileTransferClient.MESSAGE_SIZE);
             fileData = new byte[fileDataLength];
-            System.arraycopy(packet.getData(), FileTransferClient.PACKET_NUMBER_SIZE + FileTransferClient.CRC_SIZE, fileData, 0, fileDataLength);
+            System.arraycopy(packetData, FileTransferClient.PACKET_NUMBER_SIZE + FileTransferClient.CRC_SIZE, fileData, 0, fileDataLength);
             long crcExpected = ByteBuffer.wrap(packet.getData(), FileTransferClient.PACKET_NUMBER_SIZE, FileTransferClient.CRC_SIZE).getInt() & 0xFFFFFFFFL;
             long crcCalculated = FileTransferClient.getCRCValue(fileData);
             if (crcCalculated != crcExpected) {

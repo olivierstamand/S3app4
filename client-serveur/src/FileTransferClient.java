@@ -18,7 +18,7 @@ public class FileTransferClient {
     public static final int MESSAGE_SIZE = 12; // 8 bytes
     public static final int MAX_PACKET_SIZE_DATA =  200-PACKET_NUMBER_SIZE-CRC_SIZE-MESSAGE_SIZE;
 
-    private static final int SERVER_PORT = 25000;
+    private static final int SERVER_PORT = 35000;
     private static final int HEADER_SIZE = CRC_SIZE+PACKET_NUMBER_SIZE+MESSAGE_SIZE;
 
     public static void main(String[] args) throws IOException {
