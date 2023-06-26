@@ -62,6 +62,9 @@ public class QuoteServerThread extends Thread {
         transportHandler= new TransportHandlerServer();
         applicationHandler= new ApplicationHandlerServer();
         dataLinkHandler2= new DataLinkHandlerServer2(socket);
+        dataLinkHandler1.setSocket(socket);
+        transportHandler.setSocket(socket);
+        applicationHandler.setSocket(socket);
         // Connect the handlers in the chain
         dataLinkHandler1.setNextHandler(transportHandler);
         transportHandler.setNextHandler(applicationHandler);
@@ -77,10 +80,9 @@ public class QuoteServerThread extends Thread {
 
                 while (true) {
                     try {
-                        byte[] buf = new byte[256];
+                        byte[] buf = new byte[200];
                         DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
                         //socket.receive(dataPacket);
-                        int lenght= dataPacket.getLength();
 
                         // Pass the packet to the first handler in the chain
                         dataLinkHandler1.handlePacket(dataPacket);
