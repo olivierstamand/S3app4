@@ -57,7 +57,7 @@ public class QuoteServerThread extends Thread {
 
     public QuoteServerThread(String name) throws IOException {
         super(name);
-        socket= new DatagramSocket(25000);
+        socket= new DatagramSocket(35000);
         dataLinkHandler1= new DataLinkHandlerServer1(socket);
         transportHandler= new TransportHandlerServer();
         applicationHandler= new ApplicationHandlerServer();
@@ -80,6 +80,7 @@ public class QuoteServerThread extends Thread {
                         byte[] buf = new byte[200];
                         DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
                         //socket.receive(dataPacket);
+                        int lenght= dataPacket.getLength();
 
                         // Pass the packet to the first handler in the chain
                         dataLinkHandler1.handlePacket(dataPacket);
