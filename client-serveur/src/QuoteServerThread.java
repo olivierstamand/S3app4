@@ -56,56 +56,33 @@ public class QuoteServerThread extends Thread {
 
     public void run() {
 
-        while (true) {
-            try {
 
+                DataLinkHandlerServer1 dataLinkHandler1 = new DataLinkHandlerServer1(socket);
+                TransportHandlerServer transportHandler = new TransportHandlerServer();
+                ApplicationHandlerServer applicationHandler = new ApplicationHandlerServer();
+                DataLinkHandlerServer2 dataLinkHandler2 = new DataLinkHandlerServer2(socket);
 
-                    byte[] buf = new byte[512];
+                // Connect the handlers in the chain
+                dataLinkHandler1.setNextHandler(transportHandler);
+                transportHandler.setNextHandler(applicationHandler);
+                applicationHandler.setNextHandler(dataLinkHandler2);
 
-                    DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
-                    socket.receive(dataPacket);
-                    String packetString = new String(dataPacket.getData(), 0, dataPacket.getLength(), StandardCharsets.UTF_8);
+                while (true) {
+                    try {
+                        byte[] buf = new byte[512];
+                        DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
+                        //socket.receive(dataPacket);
 
-                    // Parse the packet JSON
-                    JSONObject packetJson = new JSONObject(packetString);
-                    if(packetJson.getInt("packet_number")==1)
-                    {
-                        filename= packetJson.getString("fileName");
+                        // Pass the packet to the first handler in the chain
+                        dataLinkHandler1.handlePacket(dataPacket);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
-                    else {
-                        byte[] fileData = Base64.getDecoder().decode(packetJson.getString("fileData"));
-                        long crcExpected = packetJson.getLong("CRC");
-                        long crcCalculated = FileTransferClient.getCRCValue(fileData);
-                        if (crcCalculated != crcExpected) {
-                            //handle logic
-                        }
 
+                    if (!moreQuotes)
+                        break;
+                }
 
-                        //Write the file data
-                        try (FileOutputStream fileOutputStream = new FileOutputStream(filename, true)) {
-                            fileOutputStream.write(fileData);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-
-
-                        // send the response to the client at "address" and "port"
-                        InetAddress address = dataPacket.getAddress();
-                        int port = dataPacket.getPort();
-                        dataPacket = new DatagramPacket(buf, buf.length, address, port);
-                        socket.send(dataPacket);
-                    }
-            } catch (IOException e) {
-                e.printStackTrace();
-
+                socket.close();
             }
-            if (!moreQuotes)
-                break;
-        }
-        socket.close();
-    }
 }
-
-
-
-
