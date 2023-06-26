@@ -2,6 +2,7 @@
 
 import java.io.*;
 import java.net.*;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Scanner;
@@ -10,9 +11,15 @@ import java.util.zip.CRC32;
 import org.json.JSONObject;
 
 public class FileTransferClient {
-    private static final int MAX_PACKET_SIZE = 200;
+
+
+    public static final int PACKET_NUMBER_SIZE = 4; // 4 bytes
+    public static final int CRC_SIZE = 4; // 4 bytes
+    public static final int MESSAGE_SIZE = 12; // 8 bytes
+    public static final int MAX_PACKET_SIZE_DATA =  200-PACKET_NUMBER_SIZE-CRC_SIZE-MESSAGE_SIZE;
+
     private static final int SERVER_PORT = 25000;
-    private static final int HEADER_SIZE = 10;
+    private static final int HEADER_SIZE = CRC_SIZE+PACKET_NUMBER_SIZE+MESSAGE_SIZE;
 
     public static void main(String[] args) throws IOException {
         if (args.length != 2) {
@@ -36,27 +43,27 @@ public class FileTransferClient {
         // Create a datagram socket
         DatagramSocket socket = new DatagramSocket();
 
-        byte [] packetFileName= createPacketHeader(1,getCRCValue(file.getName().getBytes()), file.getName(),null);
+        byte [] packetFileName= createPacketHeader(1,getCRCValue(file.getName().getBytes()), null,file.getName().getBytes());
         sendPacket(socket,packetFileName,serverAddress,SERVER_PORT);
 
 
 
 
         // Calculate the total number of packets needed for file transmission
-        int totalPackets = (int) Math.ceil((double) fileContent.length / MAX_PACKET_SIZE);
+        int totalPackets = (int) Math.ceil((double) fileContent.length / MAX_PACKET_SIZE_DATA);
 
         // Send data packets
         // Send data packets
         for (int packetNumber = 1; packetNumber < totalPackets; packetNumber++) {
 
-            int offset = packetNumber * MAX_PACKET_SIZE;
-            int length = Math.min(MAX_PACKET_SIZE, fileContent.length - offset);
+            int offset = packetNumber * MAX_PACKET_SIZE_DATA;
+            int length = Math.min(MAX_PACKET_SIZE_DATA, fileContent.length - offset);
             byte[] packetData = new byte[length];
             System.arraycopy(fileContent, offset, packetData, 0, length);
 
 
             // Create the packet with sequence number and data
-            byte[] fullPacket = createPacketHeader(packetNumber+1,getCRCValue(packetData),file.getName(), packetData);
+            byte[] fullPacket = createPacketHeader(packetNumber+1,getCRCValue(packetData), null, packetData);
 
             sendPacket(socket,fullPacket,serverAddress,SERVER_PORT);
 
@@ -73,18 +80,31 @@ public class FileTransferClient {
 
 
 
-    private static byte[] createPacketHeader(int packet_number,long CRC,  String fileName,byte [] data) {
-        // Create a JSON object for the header
-        JSONObject headerJson = new JSONObject();
-        headerJson.put("packet_number",packet_number);
-        headerJson.put("CRC", CRC);
-        headerJson.put("fileName", fileName);
-        if(data!=null)
-            headerJson.put("fileData", Base64.getEncoder().encodeToString(data));
+    private static byte[] createPacketHeader(int packetNumber, long crc, String message, byte[] data) {
+        byte[] header = new byte[HEADER_SIZE];
 
-        // Convert the JSON object to a byte array
-        String headerString = headerJson.toString();
-        return headerString.getBytes(StandardCharsets.UTF_8);
+        // Set packet number (4 bytes)
+        ByteBuffer.wrap(header, 0, PACKET_NUMBER_SIZE).putInt(packetNumber);
+
+        // Set CRC (4 bytes)
+        ByteBuffer.wrap(header, PACKET_NUMBER_SIZE, CRC_SIZE).putInt((int) crc);
+
+
+        if(message!=null) {
+            byte[] fileNameBytes = message.getBytes(StandardCharsets.UTF_8);
+            int copyLength = Math.min(fileNameBytes.length, MESSAGE_SIZE);
+            System.arraycopy(fileNameBytes, 0, header, PACKET_NUMBER_SIZE + CRC_SIZE + MESSAGE_SIZE, copyLength);
+        }
+
+        // Append the data (if present) to the header
+        if (data != null) {
+            byte[] fullPacket = new byte[header.length + data.length];
+            System.arraycopy(header, 0, fullPacket, 0, header.length);
+            System.arraycopy(data, 0, fullPacket, header.length, data.length);
+            return fullPacket;
+        } else {
+            return header;
+        }
     }
     public static long getCRCValue(byte[] data )
     {

@@ -8,7 +8,7 @@ import java.util.Base64;
 import java.util.zip.CRC32;
 
 public class DataLinkHandlerServer1 extends BaseHandler {
-    private HandlerInterface nextHandler;
+
     private DatagramSocket socket;
 
     public DataLinkHandlerServer1(DatagramSocket socket) {
