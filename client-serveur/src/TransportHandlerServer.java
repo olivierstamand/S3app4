@@ -13,11 +13,12 @@ public class TransportHandlerServer extends BaseHandler {
 
         byte[] fileData = null;
         byte[] packetData = packet.getData();
-       if (packet.getLength() > FileTransferClient.HEADER_SIZE) {
-            int fileDataLength = packetData.length- FileTransferClient.HEADER_SIZE;
+        packetData= ApplicationHandlerServer.trimByteArray(packetData);
+       if (packetData.length> FileTransferClient.HEADER_SIZE) {
+            int fileDataLength = packetData.length-FileTransferClient.HEADER_SIZE;
             fileData = new byte[fileDataLength];
             System.arraycopy(packetData, FileTransferClient.HEADER_SIZE, fileData, 0, fileDataLength);
-            long crcExpected = ByteBuffer.wrap(packet.getData(), FileTransferClient.PACKET_NUMBER_SIZE, FileTransferClient.CRC_SIZE).getInt() & 0xFFFFFFFFL;
+            long crcExpected = ByteBuffer.wrap(packetData, FileTransferClient.PACKET_NUMBER_SIZE, FileTransferClient.CRC_SIZE).getInt() & 0xFFFFFFFFL;
             long crcCalculated = FileTransferClient.getCRCValue(fileData);
             if (crcCalculated != crcExpected) {
                 // Handle logic for error detection in the Transport Layer

@@ -16,6 +16,7 @@ public class FileTransferClient {
     public static final int PACKET_NUMBER_SIZE = 4; // 4 bytes
     public static final int CRC_SIZE = 4; // 4 bytes
     public static final int MESSAGE_SIZE = 12; // 8 bytes
+
     public static final int MAX_PACKET_SIZE_DATA =  200-PACKET_NUMBER_SIZE-CRC_SIZE-MESSAGE_SIZE;
     private static final int SERVER_PORT = 35000;
     public static final int HEADER_SIZE = CRC_SIZE+PACKET_NUMBER_SIZE+MESSAGE_SIZE;
@@ -87,11 +88,10 @@ public class FileTransferClient {
         // Set CRC (4 bytes)
         ByteBuffer.wrap(header, PACKET_NUMBER_SIZE, CRC_SIZE).putInt((int) crc);
 
-
         if(message!=null) {
             byte[] fileNameBytes = message.getBytes(StandardCharsets.UTF_8);
             int copyLength = Math.min(fileNameBytes.length, MESSAGE_SIZE);
-            System.arraycopy(fileNameBytes, 0, header, PACKET_NUMBER_SIZE + CRC_SIZE + MESSAGE_SIZE, copyLength);
+            System.arraycopy(fileNameBytes, 0, header, HEADER_SIZE, copyLength);
         }
 
         // Append the data (if present) to the header
@@ -99,6 +99,7 @@ public class FileTransferClient {
             byte[] fullPacket = new byte[header.length + data.length];
             System.arraycopy(header, 0, fullPacket, 0, header.length);
             System.arraycopy(data, 0, fullPacket, header.length, data.length);
+
             return fullPacket;
         } else {
             return header;
