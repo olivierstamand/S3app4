@@ -33,8 +33,8 @@ public class TransportHandlerServer extends BaseHandler {
             fileData = new byte[fileDataLength];
             System.arraycopy(packetData, FileTransferClient.HEADER_SIZE, fileData, 0, fileDataLength);
             long crcExpected = ByteBuffer.wrap(packetData, FileTransferClient.PACKET_NUMBER_SIZE, FileTransferClient.CRC_SIZE).getInt() & 0xFFFFFFFFL;
-            long crcCalculated = FileTransferClient.getCRCValue(fileData);
-            //long crcCalculated=2;
+            //long crcCalculated = FileTransferClient.getCRCValue(fileData);
+            long crcCalculated=2;
             int packetNumber= ByteBuffer.wrap(packetData,0,FileTransferClient.PACKET_NUMBER_SIZE).getInt();
 
            if (crcCalculated != crcExpected) {

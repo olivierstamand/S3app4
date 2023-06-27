@@ -46,13 +46,14 @@ public class FileTransferClient {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
             fileInputStream.read(fileContent);
         }
+        int totalPackets = (int) Math.ceil((double) fileContent.length / MAX_PACKET_SIZE_DATA);
 
         // Get the server address
         InetAddress serverAddress = InetAddress.getByName(hostname);
         socket= new DatagramSocket();
         // Create a datagram socket
 
-
+        int currentPacketNumber=1;
         byte [] packetFileName= createPacketHeader(1,getCRCValue(file.getName().getBytes()), "",file.getName().getBytes());
         sendPacket(socket,packetFileName,serverAddress,SERVER_PORT);
         byte [] buffer= new byte[HEADER_SIZE];
@@ -65,8 +66,9 @@ public class FileTransferClient {
             socket.receive(receivedPacket);
             errorCount++;
             if(errorCount>2){
-                byte[] errorPacket=createPacketHeader(2,0,PACKET_LOSS,null);
+                byte[] errorPacket=createPacketHeader(1,0,PACKET_LOSS,null);
                 sendPacket(socket,errorPacket,serverAddress,SERVER_PORT);
+                break;
             }
         }
 
@@ -76,10 +78,10 @@ public class FileTransferClient {
 
 
         // Calculate the total number of packets needed for file transmission
-        int totalPackets = (int) Math.ceil((double) fileContent.length / MAX_PACKET_SIZE_DATA);
 
         // Send data packets
         // Send data packets
+        errorCount=0;
         for (int packetNumber = 0; packetNumber < totalPackets; packetNumber++) {
 
             int offset = packetNumber * MAX_PACKET_SIZE_DATA;
@@ -99,6 +101,13 @@ public class FileTransferClient {
                 sendPacket(socket,fullPacket,serverAddress,SERVER_PORT);
                 receivedPacket= new DatagramPacket(buffer,buffer.length);
                 socket.receive(receivedPacket);
+                errorCount++;
+
+                if(errorCount>2){
+                    byte[] errorPacket=createPacketHeader(packetNumber+2,0,PACKET_LOSS,null);
+                    sendPacket(socket,errorPacket,serverAddress,SERVER_PORT);
+                    break;
+                }
 
             }
 
