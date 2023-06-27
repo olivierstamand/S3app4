@@ -82,7 +82,6 @@ public class QuoteServerThread extends Thread {
                     try {
                         byte[] buf = new byte[200];
                         DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
-                        //socket.receive(dataPacket);
 
                         // Pass the packet to the first handler in the chain
                         dataLinkHandler1.handlePacket(dataPacket);

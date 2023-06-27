@@ -28,27 +28,29 @@ public class TransportHandlerServer extends BaseHandler {
         byte[] fileData = null;
         byte[] packetData = packet.getData();
         packetData= ApplicationHandlerServer.trimByteArray(packetData);
-       if (packetData.length> FileTransferClient.HEADER_SIZE) {
-            int fileDataLength = packetData.length-FileTransferClient.HEADER_SIZE;
-            fileData = new byte[fileDataLength];
-            System.arraycopy(packetData, FileTransferClient.HEADER_SIZE, fileData, 0, fileDataLength);
-            long crcExpected = ByteBuffer.wrap(packetData, FileTransferClient.PACKET_NUMBER_SIZE, FileTransferClient.CRC_SIZE).getInt() & 0xFFFFFFFFL;
-            //long crcCalculated = FileTransferClient.getCRCValue(fileData);
-            long crcCalculated=2;
-            int packetNumber= ByteBuffer.wrap(packetData,0,FileTransferClient.PACKET_NUMBER_SIZE).getInt();
+        int packetNumber = ByteBuffer.wrap(packetData, 0, FileTransferClient.PACKET_NUMBER_SIZE).getInt();
+        boolean hasData= packetData.length> FileTransferClient.HEADER_SIZE;
+       if (hasData) {
+           int fileDataLength = packetData.length - FileTransferClient.HEADER_SIZE;
+           fileData = new byte[fileDataLength];
+           System.arraycopy(packetData, FileTransferClient.HEADER_SIZE, fileData, 0, fileDataLength);
+           long crcExpected = ByteBuffer.wrap(packetData, FileTransferClient.PACKET_NUMBER_SIZE, FileTransferClient.CRC_SIZE).getInt() & 0xFFFFFFFFL;
+           //long crcCalculated = FileTransferClient.getCRCValue(fileData);
+           long crcCalculated = 2;
 
            if (crcCalculated != crcExpected) {
-                byte[] Returnpacket= FileTransferClient.createPacketHeader(packetNumber,crcCalculated,FileTransferClient.ERROR_CRC,null);
-                FileTransferClient.sendPacket(socket,Returnpacket,packet.getAddress(),packet.getPort());
-                addMessageLog(FileTransferClient.ERROR_CRC,packetNumber);
+               byte[] Returnpacket = FileTransferClient.createPacketHeader(packetNumber, crcCalculated, FileTransferClient.ERROR_CRC, null);
+               FileTransferClient.sendPacket(socket, Returnpacket, packet.getAddress(), packet.getPort());
+               addMessageLog(FileTransferClient.ERROR_CRC, packetNumber);
 
-                return;
+               return;
 
 
-            }
-           int startIndex = FileTransferClient.HEADER_SIZE - FileTransferClient.MESSAGE_SIZE;
+           }
+       }
+           int startIndex =  FileTransferClient.PACKET_NUMBER_SIZE+ FileTransferClient.CRC_SIZE;
            byte[] stringBytes = new byte[FileTransferClient.MESSAGE_SIZE];
-           System.arraycopy(packetData, startIndex, stringBytes, 0, FileTransferClient.MESSAGE_SIZE);
+           System.arraycopy(packetData, startIndex, stringBytes, 0, packetData.length-(FileTransferClient.PACKET_NUMBER_SIZE+FileTransferClient.CRC_SIZE));
            stringBytes = ApplicationHandlerServer.trimByteArray(stringBytes);
            String message = new String(stringBytes);
            if(message.equals(FileTransferClient.PACKET_LOSS))
@@ -60,7 +62,7 @@ public class TransportHandlerServer extends BaseHandler {
             addMessageLog(FileTransferClient.PACKET_SENT,packetNumber);
 
             nextHandler.handlePacket(packet);
-        }
+
 
 
     }

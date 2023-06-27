@@ -19,13 +19,15 @@ public class FileTransferClient {
     private static DatagramSocket socket = null;
 
     public static final String ERROR_CRC= "Error CRC";
-    public static final String PACKET_LOSS= "Packet lost";
+    public static final String PACKET_LOSS= "Packet Lost";
 
-    public static final String PACKET_SENT= "Packet sent";
+    public static final String PACKET_SENT= "Packet Sent";
 
-    public static final int MAX_PACKET_SIZE_DATA =  200-PACKET_NUMBER_SIZE-CRC_SIZE-MESSAGE_SIZE;
+
     public static final int SERVER_PORT = 35000;
     public static final int HEADER_SIZE = CRC_SIZE+PACKET_NUMBER_SIZE+MESSAGE_SIZE;
+
+    public static final int MAX_PACKET_SIZE_DATA =  200-HEADER_SIZE;
     private static int errorCount=0;
 
     public FileTransferClient() throws SocketException {
@@ -171,7 +173,7 @@ public class FileTransferClient {
 
 
             byte[] data = p.getData();
-            int startIndex = HEADER_SIZE - MESSAGE_SIZE;
+            int startIndex = PACKET_NUMBER_SIZE+CRC_SIZE;
             byte[] stringBytes = new byte[FileTransferClient.MESSAGE_SIZE];
             System.arraycopy(data, startIndex, stringBytes, 0, FileTransferClient.MESSAGE_SIZE);
             stringBytes = ApplicationHandlerServer.trimByteArray(stringBytes);
