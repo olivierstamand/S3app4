@@ -18,7 +18,7 @@ public class FileTransferClient {
     public static final int MESSAGE_SIZE = 12; // 8 bytes
     private static DatagramSocket socket = null;
 
-    public static final String ERROR_CRC= "Error";
+    public static final String ERROR_CRC= "Error CRC";
     public static final String PACKET_LOSS= "Packet lost";
 
     public static final String PACKET_SENT= "Packet sent";
@@ -57,7 +57,7 @@ public class FileTransferClient {
         byte [] buffer= new byte[HEADER_SIZE];
         DatagramPacket receivedPacket= new DatagramPacket(buffer,buffer.length);
         socket.receive(receivedPacket);
-        while(checkPacketLoss(receivedPacket)) {
+        while(!checkPacketLoss(receivedPacket)) {
             buffer= new byte[HEADER_SIZE];
             sendPacket(socket,packetFileName,serverAddress,SERVER_PORT);
             receivedPacket= new DatagramPacket(buffer,buffer.length);
