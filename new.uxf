@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="15.0.0">
+  <help_text/>
+  <zoom_level>8</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>16</x>
+      <y>512</y>
+      <w>168</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>DataLinkHandlerServer1
+--
+
+--
++ DataLinkServer1()
++ handlePacket(packet: DatagramPacket): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>544</x>
+      <y>512</y>
+      <w>168</w>
+      <h>152</h>
+    </coordinates>
+    <panel_attributes>DataLinkHandlerServer2
+--
+
+--
++ DataLinkServer2()
++ handlePacket(packet: DatagramPacket): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>64</x>
+      <y>160</y>
+      <w>288</w>
+      <h>104</h>
+    </coordinates>
+    <panel_attributes>&lt;&lt;Interface&gt;&gt;
+HandlerInterface
+--
+
+--
++ handlePacket(packet: DatagramPacket): void
++ setNextHandler(nextHandler: HandlerInterface): void
++ setSocket(s: DatagramSocket): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>96</x>
+      <y>288</y>
+      <w>168</w>
+      <h>136</h>
+    </coordinates>
+    <panel_attributes>BaseHandler
+--
+# nextHandler: HandlerInterface
+# socket: DatagramSocket    
+--
++ handlePacket(packet: DatagramPacket): void
++ setNextHandler(nextHandler: HandlerInterface): void
++ setSocket(s: DatagramSocket): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>376</x>
+      <y>256</y>
+      <w>248</w>
+      <h>176</h>
+    </coordinates>
+    <panel_attributes>QuoteServerThread
+--
+# socket: DatagramSocket
+# in: BufferedReader
+# moreQuotes: boolean
+# dataLinkHandler1: HandlerInterface
+# transportHandler: HandlerInterface
+# applicationHandler: HandlerInterface
+# dataLinkHandler2: HandlerInterface
+--
++ QuoteServerThread()
++ QuoteServerThread(name: String)
++ run(): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>424</x>
+      <y>96</y>
+      <w>136</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>QuoteServer
+--
+
+--
++ main(args: String[])</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>368</x>
+      <y>512</y>
+      <w>168</w>
+      <h>152</h>
+    </coordinates>
+    <panel_attributes>ApplicationHandlerServer
+--
+- filename: String
+--
++ handlePacket(packet: DatagramPacket): void
++ trimByteArray(data: byte[]): byte[]
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>192</x>
+      <y>512</y>
+      <w>168</w>
+      <h>152</h>
+    </coordinates>
+    <panel_attributes>TransportHandlerServer
+--
+-id: logWriter: PrintWriter
+--
++ TransportHandlerServer()
++ handlePacket(packet: DatagramPacket): void
++ addMessageLog(message: String): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>176</x>
+      <y>256</y>
+      <w>24</w>
+      <h>48</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;.</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;40.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>168</x>
+      <y>416</y>
+      <w>112</w>
+      <h>112</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;60.0;120.0;60.0;120.0;120.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>104</x>
+      <y>416</y>
+      <w>88</w>
+      <h>112</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>90.0;10.0;90.0;60.0;10.0;60.0;10.0;120.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>168</x>
+      <y>416</y>
+      <w>296</w>
+      <h>112</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;60.0;350.0;60.0;350.0;120.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>168</x>
+      <y>416</y>
+      <w>424</w>
+      <h>112</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;60.0;510.0;60.0;510.0;120.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>344</x>
+      <y>200</y>
+      <w>152</w>
+      <h>72</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>170.0;70.0;170.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>504</x>
+      <y>168</y>
+      <w>24</w>
+      <h>104</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;110.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>648</x>
+      <y>40</y>
+      <w>464</w>
+      <h>264</h>
+    </coordinates>
+    <panel_attributes>FileTransferClient
+--
++ PACKET_NUMBER_SIZE: int final
++ CRC_SIZE: int final
++ MESSAGE_SIZE: int final
+- socket: DatagramSocket
++ ERROR_CRC: string final
++ PACKET_LOSS: string final
++ PACKET_SENT: string final
++ SERVER_PORT: int final
++ HEADER_SIZE: int final
++ MAX_PACKET_SIZE_DATA: int final
+- errorCount: int 
+--
++ FileTransferClient()
++ main(args: String[]): void
++ createPacketHeader(packetNumber: int, crc: long, message: String, data: byte[]): byte[]
++ getCRCValue(data: byte[]): long
++ sendPacket(socket: DatagramSocket, packet: byte[], address: InetAddress, port: int): void
++ checkPacketLoss(p: DatagramPacket): boolean
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>552</x>
+      <y>120</y>
+      <w>112</w>
+      <h>24</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;120.0;10.0</additional_attributes>
+  </element>
+</diagram>
