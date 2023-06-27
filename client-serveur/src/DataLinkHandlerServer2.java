@@ -5,9 +5,6 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 
 public class DataLinkHandlerServer2 extends BaseHandler{
-    private HandlerInterface nextHandler;
-    private DatagramSocket socket;
-
     public DataLinkHandlerServer2(DatagramSocket socket) {
         this.socket = socket;
     }

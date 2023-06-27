@@ -9,8 +9,6 @@ import java.util.zip.CRC32;
 
 public class DataLinkHandlerServer1 extends BaseHandler {
 
-    private DatagramSocket socket;
-
     public DataLinkHandlerServer1(DatagramSocket socket) {
         this.socket = socket;
     }
