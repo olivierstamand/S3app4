@@ -26,6 +26,7 @@ public class FileTransferClient {
     public static final int MAX_PACKET_SIZE_DATA =  200-PACKET_NUMBER_SIZE-CRC_SIZE-MESSAGE_SIZE;
     public static final int SERVER_PORT = 35000;
     public static final int HEADER_SIZE = CRC_SIZE+PACKET_NUMBER_SIZE+MESSAGE_SIZE;
+    private static int errorCount=0;
 
     public FileTransferClient() throws SocketException {
     }
@@ -62,6 +63,11 @@ public class FileTransferClient {
             sendPacket(socket,packetFileName,serverAddress,SERVER_PORT);
             receivedPacket= new DatagramPacket(buffer,buffer.length);
             socket.receive(receivedPacket);
+            errorCount++;
+            if(errorCount>2){
+                byte[] errorPacket=createPacketHeader(2,0,PACKET_LOSS,null);
+                sendPacket(socket,errorPacket,serverAddress,SERVER_PORT);
+            }
         }
 
 
