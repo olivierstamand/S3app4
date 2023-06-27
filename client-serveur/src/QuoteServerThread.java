@@ -42,10 +42,10 @@ public class QuoteServerThread extends Thread {
     protected DatagramSocket socket = null;
     protected BufferedReader in = null;
     protected boolean moreQuotes = true;
-    protected DataLinkHandlerServer1 dataLinkHandler1 = null;
-    protected TransportHandlerServer transportHandler = null;
-    protected ApplicationHandlerServer applicationHandler = null;
-    protected DataLinkHandlerServer2 dataLinkHandler2 = null;
+    protected HandlerInterface dataLinkHandler1 = null;
+    protected HandlerInterface transportHandler = null;
+    protected HandlerInterface applicationHandler = null;
+    protected HandlerInterface dataLinkHandler2 = null;
 
     protected String filename=null;
     public QuoteServerThread() throws IOException {
