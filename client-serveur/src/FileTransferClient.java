@@ -32,9 +32,7 @@ public class FileTransferClient {
     public static final int MAX_PACKET_SIZE_DATA =  200-HEADER_SIZE;
     private static int errorCount=0;
 
-    public FileTransferClient() throws SocketException {
-    }
-
+  
     public static void main(String[] args) throws IOException {
 
 

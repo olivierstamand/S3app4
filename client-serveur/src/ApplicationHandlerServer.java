@@ -21,7 +21,6 @@ public class ApplicationHandlerServer extends BaseHandler {
         {
 
             filename= new String(fileDataByte,StandardCharsets.UTF_8);
-            filename.replaceAll("\u0000", "");
         }
         else {
             // Write the file data
