@@ -29,71 +29,71 @@
  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+import org.json.JSONObject;
+
 import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.zip.CRC32;
 
 public class QuoteServerThread extends Thread {
 
     protected DatagramSocket socket = null;
     protected BufferedReader in = null;
     protected boolean moreQuotes = true;
+    protected DataLinkHandlerServer1 dataLinkHandler1 = null;
+    protected TransportHandlerServer transportHandler = null;
+    protected ApplicationHandlerServer applicationHandler = null;
+    protected DataLinkHandlerServer2 dataLinkHandler2 = null;
 
+    protected String filename=null;
     public QuoteServerThread() throws IOException {
-        this("QuoteServerThread");
+
+       this("QuoteServer");
+
+
     }
 
     public QuoteServerThread(String name) throws IOException {
         super(name);
-        socket = new DatagramSocket(25000);
+        socket= new DatagramSocket(35000);
+        dataLinkHandler1= new DataLinkHandlerServer1(socket);
+        transportHandler= new TransportHandlerServer();
+        applicationHandler= new ApplicationHandlerServer();
+        dataLinkHandler2= new DataLinkHandlerServer2(socket);
+        dataLinkHandler1.setSocket(socket);
+        transportHandler.setSocket(socket);
+        applicationHandler.setSocket(socket);
+        // Connect the handlers in the chain
+        dataLinkHandler1.setNextHandler(transportHandler);
+        transportHandler.setNextHandler(applicationHandler);
+        applicationHandler.setNextHandler(dataLinkHandler2);
+
 
     }
 
     public void run() {
 
-        while (moreQuotes) {
-            try {
-                byte[] buf = new byte[256];
 
-                // receive request
-                DatagramPacket packet = new DatagramPacket(buf, buf.length);
-                socket.receive(packet);
-                String str = new String(buf, 0, packet.getLength(), StandardCharsets.UTF_8);
 
-                try (FileOutputStream fileOutputStream = new FileOutputStream("output.txt", true)) {
-                    fileOutputStream.write(str.getBytes(StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    e.printStackTrace();
+
+                while (true) {
+                    try {
+                        byte[] buf = new byte[200];
+                        DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
+                        //socket.receive(dataPacket);
+
+                        // Pass the packet to the first handler in the chain
+                        dataLinkHandler1.handlePacket(dataPacket);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    if (!moreQuotes)
+                        break;
                 }
 
-
-                // send the response to the client at "address" and "port"
-                InetAddress address = packet.getAddress();
-                int port = packet.getPort();
-                packet = new DatagramPacket(buf, buf.length, address, port);
-                socket.send(packet);
-            } catch (IOException e) {
-                e.printStackTrace();
-                moreQuotes = false;
+                socket.close();
             }
-        }
-        socket.close();
-    }
-
-    protected String getNextQuote() {
-        String returnValue = null;
-        try {
-            if ((returnValue = in.readLine()) == null) {
-                in.close();
-                moreQuotes = false;
-                returnValue = "No more quotes. Goodbye.";
-            }
-        } catch (IOException e) {
-            returnValue = "IOException occurred in server.";
-        }
-        return returnValue;
-    }
 }
-
-
