@@ -5,7 +5,9 @@ import java.net.*;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Random;
 import java.util.Scanner;
+import java.util.random.RandomGenerator;
 import java.util.zip.CRC32;
 
 import org.json.JSONObject;
@@ -19,22 +21,24 @@ public class FileTransferClient {
     private static DatagramSocket socket = null;
 
     public static final String ERROR_CRC= "Error CRC";
-    public static final String PACKET_LOSS= "Packet lost";
+    public static final String PACKET_LOSS= "Packet Lost";
 
-    public static final String PACKET_SENT= "Packet sent";
+    public static final String PACKET_SENT= "Packet Sent";
 
-    public static final int MAX_PACKET_SIZE_DATA =  200-PACKET_NUMBER_SIZE-CRC_SIZE-MESSAGE_SIZE;
+
     public static final int SERVER_PORT = 35000;
     public static final int HEADER_SIZE = CRC_SIZE+PACKET_NUMBER_SIZE+MESSAGE_SIZE;
+
+    public static final int MAX_PACKET_SIZE_DATA =  200-HEADER_SIZE;
+    private static int errorCount=0;
 
     public FileTransferClient() throws SocketException {
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 2) {
-            System.out.println("Usage: java FileTransferClient <hostname> <filePath>");
-            return;
-        }
+
+
+
 
         String hostname = args[0];
         String filePath = args[1];
@@ -45,14 +49,14 @@ public class FileTransferClient {
         try (FileInputStream fileInputStream = new FileInputStream(file)) {
             fileInputStream.read(fileContent);
         }
+        int totalPackets = (int) Math.ceil((double) fileContent.length / MAX_PACKET_SIZE_DATA);
 
         // Get the server address
         InetAddress serverAddress = InetAddress.getByName(hostname);
         socket= new DatagramSocket();
         // Create a datagram socket
 
-
-        byte [] packetFileName= createPacketHeader(1,getCRCValue(file.getName().getBytes()), null,file.getName().getBytes());
+        byte [] packetFileName= createPacketHeader(1,getCRCValue(file.getName().getBytes()), "",file.getName().getBytes());
         sendPacket(socket,packetFileName,serverAddress,SERVER_PORT);
         byte [] buffer= new byte[HEADER_SIZE];
         DatagramPacket receivedPacket= new DatagramPacket(buffer,buffer.length);
@@ -62,6 +66,12 @@ public class FileTransferClient {
             sendPacket(socket,packetFileName,serverAddress,SERVER_PORT);
             receivedPacket= new DatagramPacket(buffer,buffer.length);
             socket.receive(receivedPacket);
+            errorCount++;
+            if(errorCount>2){
+                byte[] errorPacket=createPacketHeader(1,0,PACKET_LOSS,null);
+                sendPacket(socket,errorPacket,serverAddress,SERVER_PORT);
+                break;
+            }
         }
 
 
@@ -70,11 +80,12 @@ public class FileTransferClient {
 
 
         // Calculate the total number of packets needed for file transmission
-        int totalPackets = (int) Math.ceil((double) fileContent.length / MAX_PACKET_SIZE_DATA);
 
         // Send data packets
         // Send data packets
+
         for (int packetNumber = 0; packetNumber < totalPackets; packetNumber++) {
+            errorCount=0;
 
             int offset = packetNumber * MAX_PACKET_SIZE_DATA;
             int length = Math.min(MAX_PACKET_SIZE_DATA, fileContent.length - offset);
@@ -82,17 +93,33 @@ public class FileTransferClient {
             System.arraycopy(fileContent, offset, packetData, 0, length);
 
             // Create the packet with sequence number and data
-            byte[] fullPacket = createPacketHeader(packetNumber+2,getCRCValue(packetData), null, packetData);
+            byte[] fullPacket = createPacketHeader(packetNumber+2,getCRCValue(packetData), "", packetData);
+            if(args[2].equals("d")&&packetNumber==0)
+            {
+                Random rand = new Random();
+
+                fullPacket[fullPacket.length-1]= (byte) rand.nextInt();
+            }
+
             sendPacket(socket,fullPacket,serverAddress,SERVER_PORT);
             buffer= new byte[HEADER_SIZE];
             receivedPacket= new DatagramPacket(buffer,buffer.length);
             socket.receive(receivedPacket);
+
+
             while(!checkPacketLoss(receivedPacket))
             {
                 buffer= new byte[HEADER_SIZE];
                 sendPacket(socket,fullPacket,serverAddress,SERVER_PORT);
                 receivedPacket= new DatagramPacket(buffer,buffer.length);
                 socket.receive(receivedPacket);
+                errorCount++;
+
+                if(errorCount>=2){
+                    byte[] errorPacket=createPacketHeader(packetNumber+2,0,PACKET_LOSS,null);
+                    sendPacket(socket,errorPacket,serverAddress,SERVER_PORT);
+                    break;
+                }
 
             }
 
@@ -156,7 +183,7 @@ public class FileTransferClient {
 
 
             byte[] data = p.getData();
-            int startIndex = HEADER_SIZE - MESSAGE_SIZE;
+            int startIndex = PACKET_NUMBER_SIZE+CRC_SIZE;
             byte[] stringBytes = new byte[FileTransferClient.MESSAGE_SIZE];
             System.arraycopy(data, startIndex, stringBytes, 0, FileTransferClient.MESSAGE_SIZE);
             stringBytes = ApplicationHandlerServer.trimByteArray(stringBytes);
