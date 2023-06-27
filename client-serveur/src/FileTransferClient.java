@@ -52,7 +52,7 @@ public class FileTransferClient {
         // Create a datagram socket
 
 
-        byte [] packetFileName= createPacketHeader(1,getCRCValue(file.getName().getBytes()), null,file.getName().getBytes());
+        byte [] packetFileName= createPacketHeader(1,getCRCValue(file.getName().getBytes()), "",file.getName().getBytes());
         sendPacket(socket,packetFileName,serverAddress,SERVER_PORT);
         byte [] buffer= new byte[HEADER_SIZE];
         DatagramPacket receivedPacket= new DatagramPacket(buffer,buffer.length);
@@ -82,7 +82,7 @@ public class FileTransferClient {
             System.arraycopy(fileContent, offset, packetData, 0, length);
 
             // Create the packet with sequence number and data
-            byte[] fullPacket = createPacketHeader(packetNumber+2,getCRCValue(packetData), null, packetData);
+            byte[] fullPacket = createPacketHeader(packetNumber+2,getCRCValue(packetData), "", packetData);
             sendPacket(socket,fullPacket,serverAddress,SERVER_PORT);
             buffer= new byte[HEADER_SIZE];
             receivedPacket= new DatagramPacket(buffer,buffer.length);

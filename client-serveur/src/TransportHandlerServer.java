@@ -46,6 +46,16 @@ public class TransportHandlerServer extends BaseHandler {
 
 
             }
+           int startIndex = FileTransferClient.HEADER_SIZE - FileTransferClient.MESSAGE_SIZE;
+           byte[] stringBytes = new byte[FileTransferClient.MESSAGE_SIZE];
+           System.arraycopy(packetData, startIndex, stringBytes, 0, FileTransferClient.MESSAGE_SIZE);
+           stringBytes = ApplicationHandlerServer.trimByteArray(stringBytes);
+           String message = new String(stringBytes);
+           if(message.equals(FileTransferClient.PACKET_LOSS))
+           {
+               addMessageLog(FileTransferClient.PACKET_LOSS,packetNumber);
+               return;
+           }
 
             addMessageLog(FileTransferClient.PACKET_SENT,packetNumber);
 
