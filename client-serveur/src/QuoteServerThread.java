@@ -1,42 +1,11 @@
 
-/*
- * Copyright (c) 1995, 2008, Oracle and/or its affiliates. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- *   - Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *
- *   - Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *
- *   - Neither the name of Oracle or the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
- * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-import org.json.JSONObject;
 
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.zip.CRC32;
-
+/**
+ * The QuoteServerThread class represents a server thread that handles the reception and processing
+ * of DatagramPackets. It implements the logic for a quote server.
+ */
 public class QuoteServerThread extends Thread {
 
     protected DatagramSocket socket = null;
@@ -47,52 +16,60 @@ public class QuoteServerThread extends Thread {
     protected HandlerInterface applicationHandler = null;
     protected HandlerInterface dataLinkHandler2 = null;
 
-    protected String filename=null;
+    protected String filename = null;
+
+    /**
+     * Constructs a QuoteServerThread with the default name "QuoteServer" and creates a DatagramSocket.
+     *
+     * @throws IOException if an I/O error occurs while creating the DatagramSocket.
+     */
     public QuoteServerThread() throws IOException {
-
-       this("QuoteServer");
-
-
+        this("QuoteServer");
     }
 
+    /**
+     * Constructs a QuoteServerThread with the specified name and creates a DatagramSocket.
+     *
+     * @param name the name of the server thread.
+     * @throws IOException if an I/O error occurs while creating the DatagramSocket.
+     */
     public QuoteServerThread(String name) throws IOException {
         super(name);
-        socket= new DatagramSocket(35000);
-        dataLinkHandler1= new DataLinkHandlerServer1(socket);
-        transportHandler= new TransportHandlerServer();
-        applicationHandler= new ApplicationHandlerServer();
-        dataLinkHandler2= new DataLinkHandlerServer2(socket);
+        socket = new DatagramSocket(35000);
+        dataLinkHandler1 = new DataLinkHandlerServer1(socket);
+        transportHandler = new TransportHandlerServer();
+        applicationHandler = new ApplicationHandlerServer();
+        dataLinkHandler2 = new DataLinkHandlerServer2(socket);
         dataLinkHandler1.setSocket(socket);
         transportHandler.setSocket(socket);
         applicationHandler.setSocket(socket);
+
         // Connect the handlers in the chain
         dataLinkHandler1.setNextHandler(transportHandler);
         transportHandler.setNextHandler(applicationHandler);
         applicationHandler.setNextHandler(dataLinkHandler2);
-
-
     }
 
+    /**
+     * Runs the server thread, continuously receiving DatagramPackets and passing them to the
+     * first handler in the chain for processing.
+     */
     public void run() {
+        while (true) {
+            try {
+                byte[] buf = new byte[200];
+                DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
 
-
-
-
-                while (true) {
-                    try {
-                        byte[] buf = new byte[200];
-                        DatagramPacket dataPacket = new DatagramPacket(buf, buf.length);
-
-                        // Pass the packet to the first handler in the chain
-                        dataLinkHandler1.handlePacket(dataPacket);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    if (!moreQuotes)
-                        break;
-                }
-
-                socket.close();
+                // Pass the packet to the first handler in the chain
+                dataLinkHandler1.handlePacket(dataPacket);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
+
+            if (!moreQuotes)
+                break;
+        }
+
+        socket.close();
+    }
 }
